@@ -73,7 +73,12 @@ def save_text_to_file(text, folder, filename):
 
 # Main function
 def main(channel_url):
-    channel_id = channel_url.split('/')[-1]
+    # Extract channel ID from URL
+    if '@' in channel_url:
+        channel_id = get_channel_id_from_url(channel_url)
+    else:
+        channel_id = channel_url.split('/')[-1]
+    
     video_ids = get_video_ids_from_channel(channel_id)
     
     for video_id in video_ids:
@@ -97,6 +102,17 @@ def main(channel_url):
                 logging.error(f"Failed to generate summary for video ID {video_id}")
         else:
             logging.error(f"Failed to retrieve transcript for video ID {video_id}")
+
+def get_channel_id_from_url(channel_url):
+    # Fetch the channel ID from the URL
+    youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
+    username = channel_url.split('@')[-1]
+    request = youtube.channels().list(
+        part="id",
+        forUsername=username
+    )
+    response = request.execute()
+    return response['items'][0]['id']
 
 if __name__ == "__main__":
     channel_url = input("Enter YouTube channel URL or ID: ")
