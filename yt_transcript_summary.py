@@ -76,6 +76,9 @@ def main(channel_url):
     # Extract channel ID from URL
     if '@' in channel_url:
         channel_id = get_channel_id_from_url(channel_url)
+        if not channel_id:
+            logging.error(f"Failed to get channel ID from URL: {channel_url}")
+            return
     else:
         channel_id = channel_url.split('/')[-1]
     
@@ -104,15 +107,18 @@ def main(channel_url):
             logging.error(f"Failed to retrieve transcript for video ID {video_id}")
 
 def get_channel_id_from_url(channel_url):
-    # Fetch the channel ID from the URL
     youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
     username = channel_url.split('@')[-1]
-    request = youtube.channels().list(
-        part="id",
-        forUsername=username
-    )
-    response = request.execute()
-    return response['items'][0]['id']
+    try:
+        request = youtube.channels().list(
+            part="id",
+            forUsername=username
+        )
+        response = request.execute()
+        return response['items'][0]['id']
+    except Exception as e:
+        logging.error(f"Error fetching channel ID for username {username}: {e}")
+        return None
 
 if __name__ == "__main__":
     channel_url = input("Enter YouTube channel URL or ID: ")
